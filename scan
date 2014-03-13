@@ -1,0 +1,20 @@
+# Nmap 6.40 scan initiated Tue Jan 14 19:30:22 2014 as: nmap -sn -iL domains.txt -oG scan
+Host: 64.12.89.186 (politicsdaily.com)	Status: Up
+Host: 216.246.74.34 (unknown.scnet.net)	Status: Up
+Host: 173.252.110.27 (edge-star-shv-13-frc1.facebook.com)	Status: Up
+Host: 66.111.4.56 (www.fastmail.fm)	Status: Up
+Host: 173.236.93.232 (sv30.premiumwebserver.com)	Status: Up
+Host: 212.25.22.152 (secure.generalmail.com)	Status: Up
+Host: 74.125.28.19 (pc-in-f19.1e100.net)	Status: Up
+Host: 65.55.75.215 (origin.sn142w.snt142.mail.live.com)	Status: Up
+Host: 65.39.178.58 (www.hushmail.com)	Status: Up
+Host: 17.158.10.94 (icloud.com)	Status: Up
+Host: 64.135.77.80 ()	Status: Up
+Host: 209.202.254.14 (*.clubgamesville.com)	Status: Up
+Host: 17.146.233.11 ()	Status: Up
+Host: 213.165.66.221 (www.mail.com)	Status: Up
+Host: 94.100.180.199 (ms.mail.ru)	Status: Up
+Host: 157.56.238.59 ()	Status: Up
+Host: 87.248.120.148 (w2.rc.vip.ch1.yahoo.com)	Status: Up
+Host: 98.139.183.24 (ir2.fp.vip.bf1.yahoo.com)	Status: Up
+# Nmap done at Tue Jan 14 19:30:37 2014 -- 19 IP addresses (18 hosts up) scanned in 15.00 seconds

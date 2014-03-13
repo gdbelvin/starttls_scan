@@ -1,0 +1,48 @@
+177.136.62.185: 220 pm04-1.guiasdeeducacao.com.br ESMTP service ready
+250-pm04-1.guiasdeeducacao.com.br says hello
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250-8BITMIME
+250-AUTH CRAM-MD5
+250-AUTH=CRAM-MD5
+250-XACK
+250-SIZE 0
+250-VERP
+250 DSN
+
+64.120.189.81: 554 SMTP synchronization error
+
+186.189.137.10: 220 girp9n-ear-10.girlandboysgear.com ESMTP Postfix
+
+213.162.113.97: 220 cliffordharris.co.uk Microsoft ESMTP MAIL Service, Version: 6.0.3790.4675 ready at  Tue, 25 Feb 2014 05:21:43 +0000 
+
+50.23.172.172: 220 rack5.registar.com ESMTP Postfix
+
+207.70.28.157: 220 server12596.baremetalcloud.com ESMTP service ready
+250-server12596.baremetalcloud.com says hello
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250-8BITMIME
+250-AUTH CRAM-MD5
+250-AUTH=CRAM-MD5
+250-XACK
+250-SIZE 0
+250-VERP
+250 DSN
+
+65.98.56.14: 220-hockey2.tmlfans.ca ESMTP Exim 4.82 #2 Tue, 25 Feb 2014 00:27:20 -0500 
+220-We do not authorize the use of this system to transport unsolicited, 
+220 and/or bulk e-mail.
+
+209.41.13.173: 220 kleeselectric.com ESMTP 
+
+209.239.119.240: 220-srv104i.hosting.cl ESMTP Exim 4.82 #2 Tue, 25 Feb 2014 00:27:36 -0500 
+220-We do not authorize the use of this system to transport unsolicited, 
+220 and/or bulk e-mail.
+
+203.145.43.34: 220 ULTRA01-PSAWIN1.home ESMTP MailEnable Service, Version: 1.986-- ready at 02/25/14 16:27:37
+
+207.57.67.100: 220 aosau.com ESMTP 
+
