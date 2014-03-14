@@ -23,10 +23,12 @@ def fetch_top_mx_records():
   invalid = 0
   results = []
   t0 = time.time()
-  for l in lines:
+  for i,l in enumerate(lines):
     try:
       number, entry = l.strip().split(",")
-      if int(number) > DOMAINS_TO_CHECK: break
+      if i > DOMAINS_TO_CHECK:
+        sys.stderr.write("Terminating after %d domains\n" % (i,))
+        break
     except:
       print "argh", l
       invalid +=1
@@ -54,7 +56,7 @@ def fetch_top_mx_records():
     process_dns_results()
 
   t1 = time.time()
-  sys.stderr.write("Checked %d domains in %.3f seconds\n" % (DOMAINS_TO_CHECK, t1 - t0))
+  sys.stderr.write("Checked %d domains in %.3f seconds\n" % (i, t1 - t0))
 
 
 def process_dns_results():
@@ -99,7 +101,7 @@ def process_mx_response(cmd, out, err):
       sys.stderr.write("weird line\n" + l+ "\n")
     else:
       domain, _m, rest = l.partition(" mail is handled by ")
-      if domain != cmd.host:
+      if domain != cmd.host and (domain + ".") != cmd.host:
         sys.stderr.write("Weird MX entry for %s->%s\n%s\n" % (cmd.orighost, cmd.host, l))
         continue
       priority, server = rest.split()
