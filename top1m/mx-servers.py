@@ -101,6 +101,7 @@ def process_mx_response(cmd, out, err):
       newcmd.loopcount = MAX_CNAME_LOOP
       newcmd.host = server
       newcmd.orighost = server
+      newcmd.parent_domain = cmd.orighost
       newcmd.type = "a"
       newcmd.callback = process_address_response
       newcmd.priority = priority
@@ -123,8 +124,9 @@ def process_address_response(cmd, out, err):
 
     if "has address" not in l:
       sys.stderr.write("weird line\n" + l+ "\n")
-  
-  print out
+    else:
+      mxserver, _h, ip = l.partition(" has address ")
+      print cmd.parent_domain, mxserver, ip
 
 def lookup_alias(l, prev_cmd):
   # Recurse to figure out what CNAMEs are pointing at
@@ -142,6 +144,8 @@ def lookup_alias(l, prev_cmd):
     cmd.orighost = prev_cmd.orighost
     cmd.host = newhost
     cmd.callback = prev_cmd.callback
+    try: cmd.parent_domain = prev_cmd.parent_domain
+    except: pass
     selectors.append(cmd.stdout)
     queries[cmd.stdout] = cmd
     return True
