@@ -11,7 +11,7 @@ hostlegal = ".-" + string.ascii_letters + string.digits
 THREADS=128
 MAX_CNAME_LOOP = 10
 
-DOMAINS_TO_CHECK = 5000
+DOMAINS_TO_CHECK = 1000001
 
 queries = {}
 selectors = []
@@ -126,7 +126,7 @@ def process_address_response(cmd, out, err):
       sys.stderr.write("weird line\n" + l+ "\n")
     else:
       mxserver, _h, ip = l.partition(" has address ")
-      print cmd.parent_domain, mxserver, ip
+      print cmd.parent_domain, cmd.priority, mxserver, ip
 
 def lookup_alias(l, prev_cmd):
   # Recurse to figure out what CNAMEs are pointing at
@@ -144,7 +144,9 @@ def lookup_alias(l, prev_cmd):
     cmd.orighost = prev_cmd.orighost
     cmd.host = newhost
     cmd.callback = prev_cmd.callback
-    try: cmd.parent_domain = prev_cmd.parent_domain
+    try: 
+      cmd.parent_domain = prev_cmd.parent_domain
+      cmd.priority = prev_cmd.priority
     except: pass
     selectors.append(cmd.stdout)
     queries[cmd.stdout] = cmd
