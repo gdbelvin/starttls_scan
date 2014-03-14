@@ -11,7 +11,7 @@ hostlegal = ".-" + string.ascii_letters + string.digits
 THREADS=128
 MAX_CNAME_LOOP = 10
 
-DOMAINS_TO_CHECK = 1000001
+DOMAINS_TO_CHECK = 10000001  # more than we have
 
 queries = {}
 selectors = []
@@ -36,34 +36,42 @@ def fetch_top_mx_records():
       invalid += 1
       break
     else:
-        results.append(host)
-        #print "querying", number, host
-        cmd = subprocess.Popen(['host', '-t', 'mx', host], stdout=PIPE)
-        cmd.loopcount = MAX_CNAME_LOOP
-        cmd.host = host
-        cmd.orighost = host
-        cmd.type = "mx"
-        cmd.callback = process_mx_response
-        selectors.append(cmd.stdout)
-        queries[cmd.stdout] = cmd
-        
-        if len(selectors) >= THREADS:
-            ready, _w, _e = select.select(selectors,[],[])
-            for r in ready:
-              cmd = queries[r]
-              out, err = cmd.communicate()
-              cmd.callback(cmd,out,err)
-              selectors.remove(r)
-              del queries[r]
+      results.append(host)
+      #print "querying", number, host
+      cmd = subprocess.Popen(['host', '-t', 'mx', host], stdout=PIPE, stderr=PIPE)
+      cmd.loopcount = MAX_CNAME_LOOP
+      cmd.host = host
+      cmd.orighost = host
+      cmd.type = "mx"
+      cmd.callback = process_mx_response
+      selectors.append(cmd.stdout)
+      queries[cmd.stdout] = cmd
+
+      if len(selectors) >= THREADS:
+        process_dns_results()
+
+  while selectors:
+    process_dns_results()
+
   t1 = time.time()
   sys.stderr.write("Checked %d domains in %.3f seconds\n" % (DOMAINS_TO_CHECK, t1 - t0))
 
+
+def process_dns_results():
+  ready, _w, _e = select.select(selectors,[],[])
+  for r in ready:
+    cmd = queries[r]
+    out, err = cmd.communicate()
+    cmd.callback(cmd,out,err)
+    selectors.remove(r)
+    del queries[r]
+
 def dns_sanity_check(cmd, out, err):
   if "NXDOMAIN" in out:
-    #sys.stderr.write("Invalid domain " + cmd.host + "\n")
+    sys.stderr.write("Invalid domain " + cmd.host + "\n")
     return False
   if "has no MX record" in out:
-    #sys.stderr.write("No mx entry for " + cmd.host + "\n")
+    sys.stderr.write("No mx entry for " + cmd.host + "\n")
     return False
   if "connection timed out; no servers could be reached" in out:
     sys.stderr.write("Timeout for " + cmd.host + "\n")
