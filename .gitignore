@@ -1,0 +1,4 @@
+*.pyc
+**/*.pyc
+pkg/**
+src/github.com/**
