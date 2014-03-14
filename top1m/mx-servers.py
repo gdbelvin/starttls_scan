@@ -8,7 +8,7 @@ lines = open("top-1m.csv").readlines()
 
 hostlegal = ".-" + string.ascii_letters + string.digits
 
-THREADS=256
+THREADS=128
 MAX_CNAME_LOOP = 10
 
 DOMAINS_TO_CHECK = 5000
@@ -38,7 +38,7 @@ def fetch_top_mx_records():
     else:
         results.append(host)
         #print "querying", number, host
-        cmd = subprocess.Popen(['host', '-t', 'mx', host], stdout=PIPE, stderr=PIPE)
+        cmd = subprocess.Popen(['host', '-t', 'mx', host], stdout=PIPE)
         cmd.loopcount = MAX_CNAME_LOOP
         cmd.host = host
         cmd.orighost = host
