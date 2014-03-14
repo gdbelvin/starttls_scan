@@ -8,7 +8,7 @@ lines = open("top-1m.csv").readlines()
 
 hostlegal = ".-" + string.ascii_letters + string.digits
 
-THREADS=100
+THREADS=256
 MAX_CNAME_LOOP = 10
 
 DOMAINS_TO_CHECK = 5000
@@ -136,11 +136,8 @@ def lookup_alias(l, prev_cmd):
     sys.stderr.write("Bad cname for %s\n%s\n" % (prev_cmd.host,l) )
     return False
   if prev_cmd.loopcount > 0:
-    try:
-      cmd = subprocess.Popen(['host', '-t', prev_cmd.type , newhost], stdout=PIPE, stderr=PIPE)
-    except:
-      print dir(prev_cmd)
-      cmd = subprocess.Popen(['host', '-t', prev_cmd.type , newhost], stdout=PIPE, stderr=PIPE)
+    cmd = subprocess.Popen(['host', '-t', prev_cmd.type , newhost], stdout=PIPE, stderr=PIPE)
+    cmd.type = prev_cmd.type
     cmd.loopcount = prev_cmd.loopcount - 1
     cmd.orighost = prev_cmd.orighost
     cmd.host = newhost
