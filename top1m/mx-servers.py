@@ -36,7 +36,8 @@ def fetch_top_mx_records():
     host = entry.partition("/")[0]
     if any([c not in hostlegal for c in host]):
       invalid += 1
-      break
+      sys.stderr.write("Invalid hostname %s\n" % host)
+      continue
     else:
       results.append(host)
       #print "querying", number, host
