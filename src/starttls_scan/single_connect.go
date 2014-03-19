@@ -3,11 +3,11 @@ package main
 import (
     "crypto/tls"
     "fmt"
-    "net/smtp"
     "reflect"
     "unsafe"
     "os"
     "net"
+    "../smtp"
 )
 
 type ConnInfo struct {
