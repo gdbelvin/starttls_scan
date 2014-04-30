@@ -55,8 +55,7 @@ func DoConnect(addr string) (ConnInfo, error) {
             return ret, err
         }
         ret.tlssuccess = true
-        // At this point, convert c.conn 
-        readConn(c)
+        ret.conn = c.Conn
     }
     if err != nil {
         return ret, err
@@ -71,7 +70,7 @@ func main() {
     info, err := DoConnect(dest)
     if err != nil {
        fmt.Println("error: ", err)
+    } else {
+        fmt.Println("conn: ", info.conn)
     }
-    fmt.Println(info)
-    fmt.Println("conn: ", info.conn)
 }
