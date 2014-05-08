@@ -1,19 +1,16 @@
 package main
 
 import (
-	"fmt"
-	//"errors"
-	"log"
-	"strings"
-	//"net/dnsclient"
-	//"time"
 	"database/sql"
+	"fmt"
 	"github.com/coopernurse/gorp"
 	_ "github.com/mattn/go-sqlite3"
+	"log"
+	"strings"
 )
 
 type Database struct {
-	dbmap          *gorp.DbMap
+	dbmap *gorp.DbMap
 }
 
 func initDb(config string) *Database {
@@ -59,4 +56,3 @@ func (db *Database) InsertResult(result *scanResult) {
 		log.Println(fmt.Sprintf("ERROR: Failed to insert row [%v] into database", *result), err)
 	}
 }
-

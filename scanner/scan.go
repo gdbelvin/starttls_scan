@@ -1,15 +1,15 @@
+/*
+Package comment
+*/
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
-	"bufio"
-	//"errors"
 	"log"
-	//"net/dnsclient"
 	"os"
 	"syscall"
-	//"time"
 )
 
 var (
@@ -19,28 +19,29 @@ var (
 )
 
 type scanInputType int
+
 const (
-	DOMAIN scanInputType  = 1
+	DOMAIN scanInputType = 1
 )
 
 type scanConfig struct {
-	index            int // The input index of this entry
-	scanInputType    scanInputType // The type of input record
-	value            string // The input string value
+	index         int           // The input index of this entry
+	scanInputType scanInputType // The type of input record
+	value         string        // The input string value
 }
 
 type Certificate struct {
-	cert           []byte
+	cert []byte
 }
 
 type scanResult struct {
-	Id                      int64  `db:"id"`
-	Address                 string         // IPv4/6 address
-	Timestamp               int64          // UNIX timestamp (nanoseconds)
+	Id        int64  `db:"id"`
+	Address   string // IPv4/6 address
+	Timestamp int64  // UNIX timestamp (nanoseconds)
 	//Cert                    []Certificate  // Server's offered certificate
-	TlsVersion              int16          // TLS version
-	HasTls                  bool           // Did the connection have STARTTLS?
-	TlsConnectionSucceeded  bool           // Did the TLS authentication succeed?
+	TlsVersion             int16 // TLS version
+	HasTls                 bool  // Did the connection have STARTTLS?
+	TlsConnectionSucceeded bool  // Did the TLS authentication succeed?
 }
 
 // Before running main, parse flags and load message data, if applicable
@@ -69,9 +70,9 @@ func main() {
 	db := initDb(*databaseFlag)
 	defer db.Close()
 
-	taskChan := make(chan scanConfig, *nConnectFlag)         // Channel for tasking
-	resultChan := make(chan scanResult, *nConnectFlag)  // Results written here for output
-	doneChan := make(chan int, *nConnectFlag)             // let goroutines signal completion
+	taskChan := make(chan scanConfig, *nConnectFlag)   // Channel for tasking
+	resultChan := make(chan scanResult, *nConnectFlag) // Results written here for output
+	doneChan := make(chan int, *nConnectFlag)          // let goroutines signal completion
 
 	// Start goroutines
 	go output(resultChan, doneChan, db)
@@ -90,11 +91,10 @@ func main() {
 
 	// Wait for completion
 	for i := 0; i < *nConnectFlag; i++ {
-		<- doneChan
+		<-doneChan
 	}
 	close(resultChan)
 	<-doneChan
 
 	log.Println("Scanning complete!")
 }
-
