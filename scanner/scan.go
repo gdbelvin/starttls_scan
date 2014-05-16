@@ -5,6 +5,7 @@ package main
 
 import (
 	"bufio"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"log"
@@ -35,13 +36,17 @@ type Certificate struct {
 }
 
 type scanResult struct {
-	Id        int64  `db:"id"`
-	Address   string // IPv4/6 address
-	Timestamp int64  // UNIX timestamp (nanoseconds)
-	//Cert                    []Certificate  // Server's offered certificate
-	TlsVersion             int16 // TLS version
-	HasTls                 bool  // Did the connection have STARTTLS?
-	TlsConnectionSucceeded bool  // Did the TLS authentication succeed?
+	Id                     int64  `db:"id"`
+	Address                string // IPv4/6 address
+	Timestamp              int64  // UNIX timestamp (nanoseconds)
+	TlsVersion             int16  // TLS version
+	HasTls                 bool   // Did the connection have STARTTLS?
+	TlsConnectionSucceeded bool   // Did the TLS authentication succeed?
+	ConnectionSuceeded     bool   // Did the TCP connection succeed?
+	CipherSuite            uint16
+	PeerCertificates       []*x509.Certificates
+
+	Conn *tls.Conn
 }
 
 // Before running main, parse flags and load message data, if applicable

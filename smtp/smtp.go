@@ -268,14 +268,14 @@ var testHookStartTLS func(*tls.Config) // nil, except for tests
 
 // Dials an address and attempts to connect with STARTTLS.
 // Returns the TLS connection object if successful.
-func DialSTARTTLS(addr string) (*tls.Conn, error) {
+func DialSTARTTLS(addr string) (*tls.Conn, bool, bool, bool, error) {
 	c, err := Dial(addr)
 	if err != nil {
-		return nil, err
+		return nil, false, false, false, err
 	}
 	defer c.Close()
 	if err = c.hello(); err != nil {
-		return nil, err
+		return nil, false, false, true, err
 	}
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		config := &tls.Config{ServerName: c.serverName}
@@ -283,15 +283,19 @@ func DialSTARTTLS(addr string) (*tls.Conn, error) {
 			testHookStartTLS(config)
 		}
 		if err = c.StartTLS(config); err != nil {
-			return nil, err
+			return nil, true, true, true, err
 		}
 		defer c.Quit()  // Terminate TLS connection after gathering info.
+
+		tls_conn, ok := c.Conn.(*tls.Conn)
+		if !ok {
+			return nil, true, true, true, errors.New("Type conversion to tls.Conn failed")
+		}
+		return tls_conn, true, true, true, nil
+	} else {
+		// Successful connection, but no STARTTLS found.
+		return nil, false, true, true, nil
 	}
-	tls_conn, ok := c.Conn.(*tls.Conn)
-	if !ok {
-		return nil, errors.New("Type conversion to tls.Conn failed")
-	}
-	return tls_conn, nil
 }
 
 // SendMail connects to the server at addr, switches to TLS if
