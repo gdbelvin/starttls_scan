@@ -5,9 +5,9 @@ package main
 
 import (
 	"bufio"
-	"crypto/tls"
 	"flag"
 	"fmt"
+	"github.com/gdbelvin/starttls_scan/smtp"
 	"log"
 	"os"
 	"syscall"
@@ -36,17 +36,25 @@ type Certificate struct {
 }
 
 type scanResult struct {
-	Id                     int64  `db:"id"`
-	Address                string // IPv4/6 address
-	Timestamp              int64  // UNIX timestamp (nanoseconds)
-	TlsVersion             int16  // TLS version
-	HasTls                 bool   // Did the connection have STARTTLS?
-	TlsConnectionSucceeded bool   // Did the TLS authentication succeed?
-	ConnectionSuceeded     bool   // Did the TCP connection succeed?
-	CipherSuite            uint16
-	PeerCertificates       []*x509.Certificates
+	Id                  int64  `db:"id"`
+	Address             string // IPv4/6 address
+	Timestamp           int64  // UNIX timestamp (nanoseconds)
+	ConnectionSuceeded  bool   // Did the TCP connection succeed?
+	SmtpConnectionState smtp.SmtpConnectionState
+	Error               error
+}
 
-	Conn *tls.Conn
+func (r *scanResult) HasSMTP() bool {
+	return r.SmtpConnectionState.ExtSTARTTLS
+}
+func (r *scanResult) TlsSucceeded() bool {
+	return r.SmtpConnectionState.Tls
+}
+func (r *scanResult) TlsVersion() uint16 {
+	return r.SmtpConnectionState.TlsConnectionState.Version
+}
+func (r *scanResult) CipherSuite() uint16 {
+	return r.SmtpConnectionState.TlsConnectionState.CipherSuite
 }
 
 // Before running main, parse flags and load message data, if applicable

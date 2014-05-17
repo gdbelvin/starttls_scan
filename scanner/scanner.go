@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"github.com/gdbelvin/starttls_scan/smtp"
@@ -10,26 +9,18 @@ import (
 	"time"
 )
 
-func DoConnect(addr string) (ConnInfo, error) {
-	ret.conn = tls_conn
-	return ret, nil
-}
-
-func scanDomain(domain string, mxDomain string, address string) (scanResult, error) {
+func scanDomain(domain string, mxDomain string, address string) scanResult {
 	result := scanResult{}
 	result.Timestamp = time.Now().UnixNano()
 	result.Address = address
 
-	conn, has_tls, did_smtp, did_tcp, err := smtp.DialSTARTTLS(addr)
-	result.TlsConnectionSucceeded = (result.Conn != nil)
-	if err != nil {
-		return result, err
+	client, err := smtp.DialSMTP(address)
+	if client != nil {
+		result.ConnectionSuceeded = true
+		result.SmtpConnectionState = client.SmtpConnectionState()
 	}
-	result.TlsVersion = result.Conn.vers
-	result.CipherSuite = result.Conn.cipherSuite
-	result.PeerCertificates = result.Conn.peerCertificates
-
-	return result, nil
+	result.Error = err
+	return result
 }
 
 // scan scans a single domain, given a flexible scan config.
@@ -43,7 +34,7 @@ func scan(config *scanConfig) (scanResult, error) {
 		if len(parts) != 3 {
 			return result, fmt.Errorf("Invalid number of parts (%v)", len(parts))
 		}
-		return scanDomain(parts[0], parts[1], parts[2])
+		return scanDomain(parts[0], parts[1], parts[2]), nil
 
 	default:
 		return result, errors.New("Unknown scan input type")

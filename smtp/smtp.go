@@ -27,7 +27,7 @@ type Client struct {
 	Text *textproto.Conn
 	// keep a reference to the connection so it can be used to create a TLS
 	// connection later
-	Conn net.Conn
+	conn net.Conn
 	// whether the Client is using TLS
 	tls        bool
 	serverName string
@@ -40,7 +40,37 @@ type Client struct {
 	helloError error  // the error from the hello
 }
 
-// Dial returns a new Client connected to an SMTP server at addr.
+type SmtpConnectionState struct {
+	TlsConnectionState	tls.ConnectionState
+	Tls		bool
+	ServerName	string
+	Ext		map[string]string
+	Auth		[]string
+	LocalName	string
+	DidHello	bool
+	HelloError	error
+	ExtSTARTTLS	bool // Whether the server advertized starttls.
+}
+
+// SMTPConnectionState returns basic details about the SMTP connection.
+func (c *Client) SmtpConnectionState() SmtpConnectionState {
+	var state SmtpConnectionState
+	state.Tls = c.tls
+	state.ServerName = c.serverName
+	state.Ext = c.ext
+	state.Auth = c.auth
+	state.LocalName = c.localName
+	state.DidHello = c.didHello
+	state.HelloError = c.helloError
+	if tls_conn, ok := c.conn.(*tls.Conn); ok {
+		state.TlsConnectionState = tls_conn.ConnectionState()
+	}
+	state.ExtSTARTTLS, _ = c.Extension("STARTTLS")
+	return state
+}
+
+
+// dial returns a new Client connected to an SMTP server at addr.
 // The addr must include a port number.
 func Dial(addr string) (*Client, error) {
 	conn, err := net.Dial("tcp", addr)
@@ -60,7 +90,7 @@ func NewClient(conn net.Conn, host string) (*Client, error) {
 		text.Close()
 		return nil, err
 	}
-	c := &Client{Text: text, Conn: conn, serverName: host, localName: "localhost"}
+	c := &Client{Text: text, conn: conn, serverName: host, localName: "localhost"}
 	return c, nil
 }
 
@@ -151,8 +181,8 @@ func (c *Client) StartTLS(config *tls.Config) error {
 	if err != nil {
 		return err
 	}
-	c.Conn = tls.Client(c.Conn, config)
-	c.Text = textproto.NewConn(c.Conn)
+	c.conn = tls.Client(c.conn, config)
+	c.Text = textproto.NewConn(c.conn)
 	c.tls = true
 	return c.ehlo()
 }
@@ -266,16 +296,19 @@ func (c *Client) Data() (io.WriteCloser, error) {
 
 var testHookStartTLS func(*tls.Config) // nil, except for tests
 
-// Dials an address and attempts to connect with STARTTLS.
-// Returns the TLS connection object if successful.
-func DialSTARTTLS(addr string) (*tls.Conn, bool, bool, bool, error) {
+// Dials and address and performs all the steps just prior to sending mail.
+// Failure - 
+// - TCP failure from dial
+// - Hello error, stored in connection state
+// - TLS error, indicated by a false tls + Advertised STARTLS in Ext
+func DialSMTP(addr string) (*Client, error) {
 	c, err := Dial(addr)
 	if err != nil {
-		return nil, false, false, false, err
+		return nil, err
 	}
 	defer c.Close()
 	if err = c.hello(); err != nil {
-		return nil, false, false, true, err
+		return c, err
 	}
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		config := &tls.Config{ServerName: c.serverName}
@@ -283,19 +316,10 @@ func DialSTARTTLS(addr string) (*tls.Conn, bool, bool, bool, error) {
 			testHookStartTLS(config)
 		}
 		if err = c.StartTLS(config); err != nil {
-			return nil, true, true, true, err
+			return c, err
 		}
-		defer c.Quit()  // Terminate TLS connection after gathering info.
-
-		tls_conn, ok := c.Conn.(*tls.Conn)
-		if !ok {
-			return nil, true, true, true, errors.New("Type conversion to tls.Conn failed")
-		}
-		return tls_conn, true, true, true, nil
-	} else {
-		// Successful connection, but no STARTTLS found.
-		return nil, false, true, true, nil
 	}
+	return c, c.Quit()
 }
 
 // SendMail connects to the server at addr, switches to TLS if
