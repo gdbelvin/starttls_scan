@@ -23,6 +23,7 @@ type scanInputType int
 
 const (
 	DOMAIN scanInputType = 1
+	MXADDR scanInputType = 2
 )
 
 type scanConfig struct {
@@ -92,12 +93,13 @@ func main() {
 	for i := 0; i < *nConnectFlag; i++ {
 		go scanner(taskChan, resultChan, doneChan)
 	}
-
+	fmt.Println("Ready to go")
 	// Read addresses from stdin and pass to grabbers
 	scanner := bufio.NewScanner(os.Stdin)
 	index := 0
 	for scanner.Scan() {
-		taskChan <- scanConfig{index: index, scanInputType: DOMAIN, value: scanner.Text()}
+		fmt.Println(">> %v", scanner.Text())
+		taskChan <- scanConfig{index: index, scanInputType: MXADDR, value: scanner.Text()}
 		index += 1
 	}
 	close(taskChan)
