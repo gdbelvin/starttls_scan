@@ -9,26 +9,26 @@ import (
 	"time"
 )
 
-func scanDomain(domain string, mxDomain string, address string) scanResult {
-	result := scanResult{}
+func scanDomain(domain string, mxDomain string, address string) ScanResult {
+	result := ScanResult{}
 	result.Timestamp = time.Now().UnixNano()
 	result.Address = address
 
-	client, err := smtp.DialSMTP(address)
+	client, _ := smtp.DialSMTP(address)
 	if client != nil {
 		result.ConnectionSuceeded = true
-		result.SmtpConnectionState = client.SmtpConnectionState()
+		//result.SmtpConnectionState = client.SmtpConnectionState()
 	}
-	result.Error = err
+	//result.Error = err
 	return result
 }
 
 // scan scans a single domain, given a flexible scan config.
 // config.value: (string) domain mxDomain address
-func scan(config *scanConfig) (scanResult, error) {
+func scan(config *scanConfig) (ScanResult, error) {
 	parts := strings.Split(config.value, " ")
 
-	result := scanResult{}
+	result := ScanResult{}
 	switch config.scanInputType {
 	case DOMAIN:
 		if len(parts) != 3 {
@@ -46,7 +46,7 @@ func scan(config *scanConfig) (scanResult, error) {
 	return result, nil
 }
 
-func scanner(taskChan chan scanConfig, resultChan chan scanResult, doneChan chan int) {
+func scanner(taskChan chan scanConfig, resultChan chan ScanResult, doneChan chan int) {
 	for config := range taskChan {
 		result, err := scan(&config)
 		if err != nil {

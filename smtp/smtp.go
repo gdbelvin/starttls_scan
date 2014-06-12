@@ -41,11 +41,11 @@ type Client struct {
 }
 
 type SmtpConnectionState struct {
-	TlsConnectionState	tls.ConnectionState
+	//tls.ConnectionState
 	Tls		bool
 	ServerName	string
-	Ext		map[string]string
-	Auth		[]string
+	Ext		string
+	Auth		string
 	LocalName	string
 	DidHello	bool
 	HelloError	error
@@ -57,14 +57,20 @@ func (c *Client) SmtpConnectionState() SmtpConnectionState {
 	var state SmtpConnectionState
 	state.Tls = c.tls
 	state.ServerName = c.serverName
-	state.Ext = c.ext
-	state.Auth = c.auth
+	var extkeys []string
+	for k := range c.ext {
+		extkeys = append(extkeys, k)
+	}
+	state.Ext = strings.Join(extkeys, ", ")
+	state.Auth = strings.Join(c.auth, ", ")
 	state.LocalName = c.localName
 	state.DidHello = c.didHello
 	state.HelloError = c.helloError
+	/*
 	if tls_conn, ok := c.conn.(*tls.Conn); ok {
 		state.TlsConnectionState = tls_conn.ConnectionState()
 	}
+	*/
 	state.ExtSTARTTLS, _ = c.Extension("STARTTLS")
 	return state
 }

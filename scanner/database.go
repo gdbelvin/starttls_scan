@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/coopernurse/gorp"
 	_ "github.com/mattn/go-sqlite3"
@@ -13,44 +14,54 @@ type Database struct {
 	dbmap *gorp.DbMap
 }
 
-func initDb(config string) *Database {
-	// Connect to database (method:config)
+func parseDbConfig(config string) (string, string, error) {
 	configParams := strings.Split(config, ":")
 	if len(configParams) != 2 {
-		log.Fatalln(fmt.Sprintf("Invalid database string: %v", config))
+		return "", "", errors.New("Invalid config string")
 	}
 	dbtype, dbconfig := configParams[0], configParams[1]
+	return dbtype, dbconfig, nil
+}
 
-	log.Printf("Connecting to database type [%v] at [%v]...", dbtype, dbconfig)
-	db, err := sql.Open(dbtype, dbconfig)
+func dialectAndDriver(dbtype string) (gorp.Dialect, string) {
+        switch dbtype {
+        case "sqlite":
+                return gorp.SqliteDialect{}, "sqlite3"
+        }
+        panic("invalid dbtype.")
+}
+
+func connect(driver string, path string) *sql.DB {
+        db, err := sql.Open(driver, path)
+        if err != nil {
+                panic("Error connecting to db: " + err.Error())
+        }
+        return db
+}
+
+func newDbMap(dbtype string, dbpath string) *gorp.DbMap {
+	dialect, driver := dialectAndDriver(dbtype)
+	dbmap := &gorp.DbMap{Db: connect(driver, dbpath), Dialect: dialect}
+        return dbmap
+}
+
+func initDb(dbtype string, dbpath string) (*Database, error) {
+	dbmap := newDbMap(dbtype, dbpath)
+	dbmap.AddTableWithName(ScanResult{}, "scan_results").SetKeys(true, "Id")
+
+	err := dbmap.CreateTablesIfNotExists()
 	if err != nil {
-		log.Fatalln(fmt.Sprintf("Failed to connect to database [%v:%v]", dbtype, dbconfig), err)
+		return nil, fmt.Errorf("Failed to create database tables: %v", err)
 	}
 
-	dbmap := &gorp.DbMap{Db: db}
-	switch dbtype {
-	case "sqlite3":
-		dbmap.Dialect = gorp.SqliteDialect{}
-	default:
-		log.Fatalln(fmt.Sprintf("Unknown database type [%v]", dbtype))
-	}
-
-	dbmap.AddTableWithName(scanResult{}, "scan_results").SetKeys(true, "Id")
-
-	err = dbmap.CreateTablesIfNotExists()
-	if err != nil {
-		log.Fatalln("Failed to create database tables", err)
-	}
-
-	log.Println("Database initialized")
-	return &Database{dbmap: dbmap}
+	return &Database{dbmap: dbmap}, nil
 }
 
 func (db *Database) Close() {
 	db.dbmap.Db.Close()
 }
 
-func (db *Database) InsertResult(result *scanResult) {
+func (db *Database) InsertResult(result *ScanResult) {
 	err := db.dbmap.Insert(result)
 	if err != nil {
 		log.Println(fmt.Sprintf("ERROR: Failed to insert row [%v] into database", *result), err)

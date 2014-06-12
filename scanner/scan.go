@@ -36,30 +36,32 @@ type Certificate struct {
 	cert []byte
 }
 
-type scanResult struct {
+type ScanResult struct {
 	Id                  int64  `db:"id"`
 	Address             string // IPv4/6 address
 	Timestamp           int64  // UNIX timestamp (nanoseconds)
 	ConnectionSuceeded  bool   // Did the TCP connection succeed?
-	SmtpConnectionState smtp.SmtpConnectionState
-	Error               error
+	Error	            string
+	smtp.SmtpConnectionState
 }
 
-func (r *scanResult) HasSMTP() bool {
+/*
+func (r *ScanResult) HasSMTP() bool {
 	return r.SmtpConnectionState.ExtSTARTTLS
 }
-func (r *scanResult) TlsSucceeded() bool {
+func (r *ScanResult) TlsSucceeded() bool {
 	return r.SmtpConnectionState.Tls
 }
-func (r *scanResult) TlsVersion() uint16 {
+func (r *ScanResult) TlsVersion() uint16 {
 	return r.SmtpConnectionState.TlsConnectionState.Version
 }
-func (r *scanResult) CipherSuite() uint16 {
+func (r *ScanResult) CipherSuite() uint16 {
 	return r.SmtpConnectionState.TlsConnectionState.CipherSuite
 }
+*/
 
 // Before running main, parse flags and load message data, if applicable
-func init() {
+func mainInit() {
 	flag.Parse()
 
 	if *databaseFlag == "" {
@@ -73,7 +75,7 @@ func init() {
 	}
 }
 
-func output(resultChan chan scanResult, doneChan chan int, db *Database) {
+func output(resultChan chan ScanResult, doneChan chan int, db *Database) {
 	for result := range resultChan {
 		db.InsertResult(&result)
 	}
@@ -81,11 +83,19 @@ func output(resultChan chan scanResult, doneChan chan int, db *Database) {
 }
 
 func main() {
-	db := initDb(*databaseFlag)
+	mainInit()
+	dbtype, dbpath, err := parseDbConfig(*databaseFlag)
+	if err != nil {
+		log.Fatalf("Error opening db: %v\n", err)
+	}
+	db, err := initDb(dbtype, dbpath)
+	if err != nil {
+		log.Fatalf("Error opening db: %v\n", err)
+	}
 	defer db.Close()
 
 	taskChan := make(chan scanConfig, *nConnectFlag)   // Channel for tasking
-	resultChan := make(chan scanResult, *nConnectFlag) // Results written here for output
+	resultChan := make(chan ScanResult, *nConnectFlag) // Results written here for output
 	doneChan := make(chan int, *nConnectFlag)          // let goroutines signal completion
 
 	// Start goroutines
@@ -98,7 +108,7 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	index := 0
 	for scanner.Scan() {
-		fmt.Println(">> %v", scanner.Text())
+		fmt.Println(">> ", scanner.Text())
 		taskChan <- scanConfig{index: index, scanInputType: MXADDR, value: scanner.Text()}
 		index += 1
 	}
