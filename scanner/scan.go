@@ -32,33 +32,13 @@ type scanConfig struct {
 	value         string        // The input string value
 }
 
-type Certificate struct {
-	cert []byte
-}
-
 type ScanResult struct {
-	Id                  int64  `db:"id"`
 	Address             string // IPv4/6 address
 	Timestamp           int64  // UNIX timestamp (nanoseconds)
 	ConnectionSuceeded  bool   // Did the TCP connection succeed?
 	Error	            string
-	smtp.SmtpConnectionState
+	Smtp		    smtp.SmtpConnectionState
 }
-
-/*
-func (r *ScanResult) HasSMTP() bool {
-	return r.SmtpConnectionState.ExtSTARTTLS
-}
-func (r *ScanResult) TlsSucceeded() bool {
-	return r.SmtpConnectionState.Tls
-}
-func (r *ScanResult) TlsVersion() uint16 {
-	return r.SmtpConnectionState.TlsConnectionState.Version
-}
-func (r *ScanResult) CipherSuite() uint16 {
-	return r.SmtpConnectionState.TlsConnectionState.CipherSuite
-}
-*/
 
 // Before running main, parse flags and load message data, if applicable
 func mainInit() {
@@ -77,7 +57,10 @@ func mainInit() {
 
 func output(resultChan chan ScanResult, doneChan chan int, db *Database) {
 	for result := range resultChan {
-		db.InsertResult(&result)
+		err := db.InsertResult(&result)
+		if err != nil {
+			log.Printf("Failed to insert row [%v] into database: %v", result, err)
+		}
 	}
 	doneChan <- 1
 }

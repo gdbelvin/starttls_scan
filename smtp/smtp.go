@@ -41,21 +41,21 @@ type Client struct {
 }
 
 type SmtpConnectionState struct {
-	//tls.ConnectionState
-	Tls		bool
 	ServerName	string
 	Ext		string
 	Auth		string
 	LocalName	string
 	DidHello	bool
 	HelloError	error
-	ExtSTARTTLS	bool // Whether the server advertized starttls.
+	ExtSTARTTLS	bool
+	HasTls		bool
+	Tls             tls.ConnectionState
 }
 
 // SMTPConnectionState returns basic details about the SMTP connection.
 func (c *Client) SmtpConnectionState() SmtpConnectionState {
 	var state SmtpConnectionState
-	state.Tls = c.tls
+	state.HasTls = c.tls
 	state.ServerName = c.serverName
 	var extkeys []string
 	for k := range c.ext {
@@ -66,11 +66,9 @@ func (c *Client) SmtpConnectionState() SmtpConnectionState {
 	state.LocalName = c.localName
 	state.DidHello = c.didHello
 	state.HelloError = c.helloError
-	/*
 	if tls_conn, ok := c.conn.(*tls.Conn); ok {
-		state.TlsConnectionState = tls_conn.ConnectionState()
+		state.Tls = tls_conn.ConnectionState()
 	}
-	*/
 	state.ExtSTARTTLS, _ = c.Extension("STARTTLS")
 	return state
 }
